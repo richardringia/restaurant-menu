@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Str;
 
 class MenuItemController extends Controller
 {
@@ -48,6 +49,7 @@ class MenuItemController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        dd($request->all());
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -55,7 +57,12 @@ class MenuItemController extends Controller
             'menu_category_id' => ['required', 'integer', 'exists:menu_categories,id'],
         ]);
 
-        $this->menuItemRepository->create($validated);
+        $item = $this->menuItemRepository->create($validated);
+
+        $item->addMedia($request->image)
+            ->usingName(Str::random(10))
+            ->toMediaCollection("preview")
+            ->singleFile();
 
         return redirect()->route('items.index')
             ->with('success', 'Menu item created successfully.');
@@ -87,6 +94,14 @@ class MenuItemController extends Controller
         ]);
 
         $this->menuItemRepository->update($item, $validated);
+
+        if ($request->hasFile('image')) {
+            $item->clearMediaCollection('preview');
+            $item->addMedia($request->file('image'))
+                ->usingName(Str::random(10))
+                ->toMediaCollection('preview')
+                ->singleFile();
+        }
 
         return redirect()->route('items.index')
             ->with('success', 'Menu item updated successfully.');

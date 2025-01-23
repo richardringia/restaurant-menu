@@ -22,11 +22,18 @@ export const MenuItemForm = ({
     categories: MenuCategory[];
 } & CrudFormProps<MenuItem>) => {
     const isEditing = !!object;
-    const { data, setData, post, patch, processing, errors } = useForm({
+    const { data, setData, post, patch, processing, errors } = useForm<{
+        name: string;
+        description: string;
+        price: string | number;
+        menu_category_id: string;
+        image: File | undefined;
+    }>({
         name: object?.name ?? '',
         description: object?.description ?? '',
         price: object?.price ?? '',
-        menu_category_id: object?.menu_category_id ?? '',
+        menu_category_id: object?.menu_category_id + '' ?? '',
+        image: undefined,
     });
 
     const onSubmit = (e: React.FormEvent) => {
@@ -36,6 +43,7 @@ export const MenuItemForm = ({
                 onSuccess: () => {
                     afterSubmit?.();
                 },
+                forceFormData: false,
             });
         } else {
             post('/items', {
@@ -48,6 +56,14 @@ export const MenuItemForm = ({
 
     return (
         <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="image">Image</Label>
+                <Input
+                    type="file"
+                    id="image"
+                    onChange={(e) => setData('image', e.target.files?.[0])}
+                />
+            </div>
             <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
